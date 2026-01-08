@@ -3,4 +3,4 @@
 HIHIHIHIHIH
 OHHHHHHHHHH
 早安
-早安你好  肚子餓 還沒吃早餐
+早安你好  肚子餓 吃早餐了
