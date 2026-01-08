@@ -12,7 +12,7 @@ class AIApp(customtkinter.CTk):
         super().__init__()
 
         # --- Basic Setup ---
-        self.title("AI辨識展演平台")
+        self.title("AI辨識-剪刀石頭布")
         self.geometry("1000x600") # Estimated size, can be adjusted
         customtkinter.set_appearance_mode("System")
         
