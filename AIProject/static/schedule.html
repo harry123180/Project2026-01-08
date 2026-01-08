@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>行程總覽</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 50px;
+        }
+        .schedule-container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .card {
+            margin-bottom: 20px;
+            border: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .card-header {
+            background-color: #e9ecef;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div id="app" class="container">
+    <div class="schedule-container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>📅 行程看板</h2>
+            <a href="/" class="btn btn-outline-primary">返回編輯</a>
+        </div>
+
+        <div v-for="(tasks, section) in groupedTodos" :key="section">
+            <div class="card" v-if="tasks.length > 0">
+                <div class="card-header">{{ section }}</div>
+                <ul class="list-group list-group-flush">
+                    <li v-for="task in tasks" :key="task.id" class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="badge bg-info me-2" v-if="task.task_type === 'meeting'">會議</span>
+                            <span class="badge bg-secondary me-2" v-else>工作</span>
+                            <span :class="{ 'text-decoration-line-through text-muted': task.done }">{{ task.content }}</span>
+                        </div>
+                        <small class="text-muted">{{ task.due_date }}</small>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div v-if="Object.keys(groupedTodos).length === 0" class="text-center text-muted">
+            載入中或無資料...
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<script>
+    const { createApp, ref, onMounted, computed } = Vue;
+
+    createApp({
+        setup() {
+            const todos = ref([]);
+
+            const fetchTodos = async () => {
+                const res = await fetch('/api/todos');
+                const data = await res.json();
+                todos.value = data.filter(t => !t.done); // Only show active tasks
+            };
+
+            const groupedTodos = computed(() => {
+                const today = new Date();
+                today.setHours(0,0,0,0);
+                
+                const sections = {
+                    "今天": [],
+                    "這禮拜": [],
+                    "下禮拜": [],
+                    "未來/其他": []
+                };
+
+                // Helper to get start/end of week
+                const getWeekRange = (d) => {
+                    const day = d.getDay() || 7; // Get current day number, converting Sun(0) to 7
+                    if (day !== 1) d.setHours(-24 * (day - 1)); // Set to Monday of this week
+                    const start = new Date(d);
+                    const end = new Date(d);
+                    end.setDate(end.getDate() + 6);
+                    return { start, end };
+                }
+
+                const currentWeek = getWeekRange(new Date(today));
+                const nextWeekStart = new Date(currentWeek.end);
+                nextWeekStart.setDate(nextWeekStart.getDate() + 1);
+                const nextWeekEnd = new Date(nextWeekStart);
+                nextWeekEnd.setDate(nextWeekEnd.getDate() + 6);
+
+                todos.value.forEach(task => {
+                    if (!task.due_date) {
+                        sections["未來/其他"].push(task);
+                        return;
+                    }
+                    
+                    const taskDate = new Date(task.due_date);
+                    // Reset time for comparison
+                    taskDate.setHours(0,0,0,0);
+                    // Fix timezone offset issue for simple date comparison if needed, 
+                    // but usually ISO string YYYY-MM-DD parses to UTC. 
+                    // Let's rely on string comparison for today to avoid timezone mess if possible,
+                    // or just careful date obj.
+                    
+                    // Simple string match for Today
+                    const todayStr = today.toISOString().split('T')[0];
+                    if (task.due_date === todayStr) {
+                        sections["今天"].push(task);
+                    } else if (taskDate >= currentWeek.start && taskDate <= currentWeek.end) {
+                        sections["這禮拜"].push(task);
+                    } else if (taskDate >= nextWeekStart && taskDate <= nextWeekEnd) {
+                        sections["下禮拜"].push(task);
+                    } else {
+                        sections["未來/其他"].push(task);
+                    }
+                });
+
+                // Remove empty sections if desired, or keep them. 
+                // Let's filter out empty ones for cleaner view
+                return Object.fromEntries(Object.entries(sections).filter(([k,v]) => v.length > 0));
+            });
+
+            onMounted(fetchTodos);
+
+            return { groupedTodos };
+        }
+    }).mount('#app');
+</script>
+
+</body>
+</html>
