@@ -48,8 +48,7 @@
     cd [repo目錄]
     ```
 
-2.  **確保模型與標籤檔案存在 (Ensure Model and Label Files Exist)**：
-    請將您的 `keras_model.h5` 和 `labels.txt` 檔案放置在 `Joanna_20260107/converted_keras_joanna/` 路徑下。
+2.  **確保模型與標籤檔案存在 (Ensure Model and Label Files Exist)**
 
 3.  **運行應用程式 (Run the Application)**：
     ```bash
