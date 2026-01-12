@@ -1,3 +1,33 @@
 node_modules/
 __pycache__/
 *.db
+
+# Model files
+*.pt
+*.pth
+*.onnx
+*.weights
+*.safetensors
+
+# Privacy / Secrets
+.env
+.env.*
+*.key
+*.pem
+credentials.*
+secrets.*
+config.local.*
+
+# Python
+*.pyc
+.venv/
+venv/
+.cache/
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+logs/
